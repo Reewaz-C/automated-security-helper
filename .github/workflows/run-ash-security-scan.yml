@@ -1,73 +1,36 @@
-name: "ASH Security Scan"
-#  Runs ASH aggregated security scan on a repository and generates various industry
-#  standard report formats such as SARIF, OCSF, CycloneDX, JUnitXML, HTML, Markdown
+name: "ASH Security Scan Core"
+
 permissions:
-  contents: read # Required to read the repository contents in order to scan them with ASH
-  checks: write # Required for writing CI check runs
-  pull-requests: write # Required for writing comments with scan results to pull requests
-on:
-  workflow_call:
-    inputs:
-      ash-version:
-        description: "ASH tag or branch to use. Defaults to a beta release until ASHv3 is released."
-        required: false
-        default: "main"
-        type: string
-      ash-mode:
-        description: 'Mode to run ASH in. Defaults to "local" for CI compatibility. Use "container" for full scanner support.'
-        required: false
-        default: "local"
-        type: string
-      config:
-        description: "Path to the ASH config file, if any"
-        required: false
-        default: ""
-        type: string
-      output-dir:
-        description: "Directory where ASH output will be stored"
-        required: false
-        default: ".ash/ash_output"
-        type: string
-      fail-on-findings:
-        description: "Whether to continue execution even if findings are detected"
-        required: false
-        default: true
-        type: boolean
-      verbose:
-        description: "Enable verbose output"
-        required: false
-        default: true
-        type: boolean
-      ash-args:
-        description: "Additional arguments to pass to ASH"
-        required: false
-        default: ""
-        type: string
-      collect-sarif-report:
-        description: "Whether to collect the ash.sarif report using github/codeql-action/upload-sarif for GitHub Advanced Security Code Scanning results"
-        required: false
-        default: true
-        type: boolean
-      collect-junit-xml-report:
-        description: "Whether to collect the ash.junit.xml report using the mikepenz/action-junit-report@v5 GitHub Action"
-        required: false
-        default: true
-        type: boolean
-      post-pr-comment:
-        description: "Whether to post scan results as PR comment"
-        required: false
-        default: true
-        type: boolean
-      repository-owner:
-        description: "Owner of the repository"
-        required: false
-        default: ${{ github.repository_owner }}
-        type: string
-      python-version:
-        description: "Python version to use"
-        required: false
-        default: "3.12"
-        type: string
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
+inputs:
+  ash-version:
+    default: "main"
+  ash-mode:
+    default: "container"
+  config:
+    default: ""
+  output-dir:
+    default: ".ash/ash_output"
+  fail-on-findings:
+    default: true
+  verbose:
+    default: true
+  ash-args:
+    default: ""
+  collect-sarif-report:
+    default: true
+  collect-junit-xml-report:
+    default: true
+  post-pr-comment:
+    default: true
+  repository-owner:
+    default: ${{ github.repository_owner }}
+  python-version:
+    default: "3.12"
 
 env:
   ASH_UVX_SOURCE: git+https://github.com/${{ github.repository }}@${{ github.sha }}
@@ -76,7 +39,7 @@ env:
 
 jobs:
   ash:
-    name: SAST, SCA, and IaC Scan
+    name: "SAST, SCA, IaC Scan"
     runs-on: ubuntu-latest
     env:
       COLUMNS: 140
@@ -109,16 +72,14 @@ jobs:
       - name: Show ASH Summary Report
         if: success() || failure()
         shell: bash
-        env:
-          ASH_REPO_CLONE_URL: https://github.com/${{ github.repository }}.git
-        run: |-
+        run: |
           uvx --from ${ASH_UVX_SOURCE} ash \
             --output-dir "${ASH_OUTPUT_DIR}" report
 
       - name: Update step summary
         if: success() || failure()
         shell: bash
-        run: |-
+        run: |
           cat "${ASH_OUTPUT_DIR}/reports/ash.summary.md" >> "${GITHUB_STEP_SUMMARY}"
           tree "${ASH_OUTPUT_DIR}"
 
@@ -146,11 +107,11 @@ jobs:
           report_paths: "**/ash.junit.xml"
           include_passed: true
           update_check: true
-          check_name: ASH Scan JUnit Test Report
-          summary: Skipped means passing, suppressed, or ignored findings that are considered non-actionable.
+          check_name: "ASH Scan JUnit Test Report"
+          summary: "Skipped means passing, suppressed, or ignored findings that are considered non-actionable."
 
       - name: Upload ASH SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: inputs.collect-sarif-report && (success() || failure())
         continue-on-error: false
         with:
