@@ -1,4 +1,11 @@
-name: Run ASH Security Scan
+name: "ASH Security Scan"
+
+# Required permissions for SARIF uploads
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write  # required for uploading SARIF to GitHub Advanced Security
 
 on:
   push:
@@ -16,3 +23,4 @@ jobs:
       collect-sarif-report: true
       collect-junit-xml-report: true
       post-pr-comment: true
+      python-version: "3.12"
