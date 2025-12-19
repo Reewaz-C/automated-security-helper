@@ -4,13 +4,14 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-  workflow_dispatch:   # allows manual run
+  workflow_dispatch:
 
 jobs:
   ash-security:
     uses: ./.github/workflows/ash-security-scan.yml
     with:
       ash-mode: "container"
+      ash-args: "--include S3-CFT.yaml"
       fail-on-findings: true
       collect-sarif-report: true
       collect-junit-xml-report: true
