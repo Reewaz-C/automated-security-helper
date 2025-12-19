@@ -1,0 +1,17 @@
+name: Run ASH Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  ash-security:
+    uses: ./.github/workflows/ash-security-scan.yml
+    with:
+      ash-version: "v3.1.2"
+      ash-mode: "container"
+      fail-on-findings: true
+      collect-sarif-report: true
+      collect-junit-xml-report: true
+      post-pr-comment: true
